@@ -12,6 +12,9 @@ Open this URL in your browser to sign in to Amazon Quick.
 Use the test credentials at the bottom of this file.
 
 Login URL: https://us-east-1.quicksight.aws.amazon.com/sn/auth/signin?accountName=QuickSight-Workshop-474668423515-us-east-1-1788689842
+Login user: user##@example.com
+Setup New Password. 
+Done.
 
 ------------------------------------------------------------
 2. AMAZON QUICK DESKTOP - OIDC CONFIGURATION
