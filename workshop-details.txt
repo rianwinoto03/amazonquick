@@ -1,0 +1,57 @@
+============================================================
+Amazon Quick Workshop - Setup Details
+============================================================
+
+This file contains all the configuration values you need for
+the workshop modules. Keep it handy throughout the session.
+
+------------------------------------------------------------
+1. AMAZON QUICK LOGIN
+------------------------------------------------------------
+Open this URL in your browser to sign in to Amazon Quick.
+Use the test credentials at the bottom of this file.
+
+Login URL: https://us-east-1.quicksight.aws.amazon.com/sn/auth/signin?accountName=QuickSight-Workshop-474668423515-us-east-1-1788689842
+
+------------------------------------------------------------
+2. AMAZON QUICK DESKTOP - OIDC CONFIGURATION
+------------------------------------------------------------
+Use these values to configure the desktop extension in the
+Amazon Quick management console (enterprise sign-in).
+
+Client ID:              6on4hahlpba1hrn3474scnr4sd
+Issuer URL:             https://cognito-idp.us-east-1.amazonaws.com/us-east-1_kgwSzutFd
+Authorization Endpoint: https://hxhm0qqqni.execute-api.us-east-1.amazonaws.com/prod/oauth2/authorize
+Token Endpoint:         https://quick-workshop-474668423515-us-east-1.auth.us-east-1.amazoncognito.com/oauth2/token
+JWKS URI:               https://cognito-idp.us-east-1.amazonaws.com/us-east-1_kgwSzutFd/.well-known/jwks.json
+
+------------------------------------------------------------
+3. OPENAPI ACTION INTEGRATION
+------------------------------------------------------------
+Use these values when configuring the OpenAPI action connector
+in the Actions module. The Base URL is your workshop API and
+the OAuth credentials authenticate Quick against it.
+
+Name:               Amazon Quick Workshop API
+Description:        HR management API for AnyCompany providing
+                    employee records, job listings, support
+                    tickets, time-off requests, and messaging.
+Base URL:           https://osxa6chv4a.execute-api.us-east-1.amazonaws.com/prod/
+Client ID:          1a95opfbjb07sm6hmsq5u25h98
+Client Secret:      1t473p10b215uphq3h053faboeufakvk34raldma84a3iaav11um
+Token URL:          https://quick-workshop-474668423515-us-east-1.auth.us-east-1.amazoncognito.com/oauth2/token
+Authorization URL:  https://quick-workshop-474668423515-us-east-1.auth.us-east-1.amazoncognito.com/oauth2/authorize
+
+------------------------------------------------------------
+4. TEST CREDENTIALS
+------------------------------------------------------------
+Use these credentials for all workshop sign-in prompts.
+
+Username:  workshop-admin
+Email:     workshop-admin@example.com
+Password:  pRpr8[~D>}2kJ3s5
+
+Web sign-in uses Username. Desktop and action connector
+sign-in use Email. The password is the same for all.
+
+============================================================
