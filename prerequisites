@@ -1,8 +1,8 @@
 Create Workshop Studio : https://catalog.workshops.aws/amazon-quick-suite-workshop/en-US
-Create Participant Users inside Amazon Quick & Assign Licenses (Professional)
 
-email: user01@example.com,user02@example.com,user03@example.com,user04@example.com,user05@example.com,
-
-Create Workshop API using workshop-schema.json & userid password from admin user. Share with your team.
-Create S3 Knowledge base connection and share into participants.
-Create Quick Apps & Publish: https://us-east-1.quicksight.aws.amazon.com/sn/account/QuickSight-Workshop-474668423515-us-east-1-1788689842/apps/7202280e-71ff-40ef-b8f3-537bcac90273/view/AnyCompany-Survey-Hub
+All done with Workshop User Admin:
+- Create Participant Users inside Amazon Quick & Assign Licenses (Professional)
+- email: user01@example.com,user02@example.com,user03@example.com,user04@example.com,user05@example.com,
+- Create Workshop API using workshop-schema.json & userid password from admin user. Share with your team.
+- Create S3 Knowledge base connection and share into participants.
+- Create Quick Apps & Publish: https://us-east-1.quicksight.aws.amazon.com/sn/account/QuickSight-Workshop-474668423515-us-east-1-1788689842/apps/7202280e-71ff-40ef-b8f3-537bcac90273/view/AnyCompany-Survey-Hub
