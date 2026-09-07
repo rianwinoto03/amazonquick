@@ -1,0 +1,134 @@
+INTERVIEW TRANSCRIPT
+Candidate: Priya Sharma
+Position: Senior Cloud Solutions Architect (REQ-2026-0847)
+Interviewer: Sarah Chen (VP Engineering) — Technical Deep Dive
+Date: May 8, 2026
+Duration: 58 minutes
+Format: Video call (Zoom)
+
+
+[00:00:15] SARAH CHEN: Hi Priya, thanks for joining today. I'm Sarah, VP of Engineering at AnyCompany. This is our technical deep dive round — I'll be asking about your architecture experience and we'll work through a design exercise. How are you doing today?
+
+[00:00:32] PRIYA SHARMA: Hi Sarah, I'm doing great, thank you! Really excited to be here. I've been researching AnyCompany's cloud transformation journey and I'm impressed by what you've accomplished.
+
+[00:00:45] SARAH CHEN: Wonderful. Let's dive in. Can you walk me through the most complex cloud architecture you've designed in the last two years?
+
+[00:01:02] PRIYA SHARMA: Absolutely. At my current role at GlobalTech Corp, I led the re-architecture of our real-time analytics platform. We were processing about 2 billion events per day from IoT sensors across 15,000 manufacturing sites worldwide.
+
+The original system was a monolithic Java application running on EC2 with a single RDS PostgreSQL database. It was hitting scaling limits — query latency was over 10 seconds during peak hours, and we were losing data during traffic spikes.
+
+I designed a complete re-architecture using event-driven patterns. We moved to Kinesis Data Streams for ingestion — partitioned by site ID for ordered processing. Behind that, we had a Lambda-based transformation layer that normalized the sensor data into a common schema. For storage, we went with a dual approach: DynamoDB for hot data with a 24-hour TTL, and S3 with Athena for historical analysis.
+
+The critical design decision was implementing a CQRS pattern — separating our read and write paths completely. Writes went through Kinesis to DynamoDB, reads were served by ElastiCache Redis clusters with a write-through cache strategy.
+
+[00:03:15] SARAH CHEN: Impressive scale. What were the key trade-offs you considered?
+
+[00:03:22] PRIYA SHARMA: Great question. The biggest trade-off was eventual consistency versus cost. With CQRS, our read path could be up to 30 seconds behind the write path. For most use cases that was acceptable, but for safety-critical alerts, we needed near-real-time. 
+
+So we implemented a dual notification path — critical alerts bypassed the normal pipeline and went through SNS directly to the monitoring dashboard. This added architectural complexity but was non-negotiable for safety.
+
+Cost was another factor. Kinesis Data Streams at that volume was expensive — about $45K/month. We evaluated Kafka on MSK but the operational overhead didn't justify the savings for our team size. We eventually optimized by implementing Kinesis enhanced fan-out only for the critical consumers and standard polling for batch processors, which brought costs down about 30%.
+
+[00:04:45] SARAH CHEN: How did you handle failure scenarios?
+
+[00:04:50] PRIYA SHARMA: We designed for failure at every layer. For Kinesis, we implemented a dead letter queue pattern — if a Lambda processor failed three times on a record, it went to an SQS DLQ with the original payload plus error context. We had a separate reconciliation service that would retry those hourly.
+
+For DynamoDB, we used global tables across us-east-1 and eu-west-1 for disaster recovery. Our RTO was under 5 minutes because the replica was always warm.
+
+The hardest failure to handle was what we called "poison messages" — malformed sensor data that would crash the Lambda function. We implemented a circuit breaker pattern using Step Functions. If error rates for a specific partition exceeded 5% in a 5-minute window, we'd automatically route that partition to a quarantine stream for manual investigation while keeping the rest of the pipeline running.
+
+[00:06:30] SARAH CHEN: Excellent. Let's move to the design exercise. Here's the scenario: AnyCompany needs to build a multi-tenant SaaS platform that serves 500 enterprise customers. Each customer has between 100 and 50,000 users. The platform needs to support real-time collaboration features — think document editing, chat, and video conferencing. How would you approach this?
+
+[00:07:00] PRIYA SHARMA: Great problem. Let me think about this systematically. I'd start with the key requirements and constraints.
+
+First, multi-tenancy strategy. With 500 enterprise customers of varying sizes, I'd go with a silo model for the top 20 accounts — those with 50K users get dedicated infrastructure for compliance and performance isolation. The remaining 480 would share a pooled infrastructure with logical tenant isolation.
+
+For the silo accounts, each gets their own VPC, dedicated RDS Aurora cluster, and isolated ECS services. For pooled tenants, I'd use a shared Aurora cluster with row-level security using PostgreSQL RLS policies, and tenant context passed through JWT tokens at every layer.
+
+[00:08:30] SARAH CHEN: How would you handle the real-time collaboration piece?
+
+[00:08:35] PRIYA SHARMA: For real-time collaboration, I'd decompose it into three distinct services:
+
+Document collaboration would use a CRDT-based approach — Conflict-free Replicated Data Types — synced through WebSocket connections managed by API Gateway WebSocket APIs backed by Lambda. State would be stored in DynamoDB with a transaction log in Kinesis for conflict resolution.
+
+For chat, I'd use AppSync with GraphQL subscriptions. It handles the WebSocket lifecycle management natively, scales automatically, and integrates with DynamoDB for message persistence.
+
+Video conferencing is the most complex. I'd integrate with Amazon Chime SDK rather than building from scratch. It handles the WebRTC signaling, TURN servers, and media processing. We'd deploy Chime meeting resources in the region closest to the majority of participants using a latency-based routing approach with Route 53.
+
+[00:10:45] SARAH CHEN: What about data isolation and security for the multi-tenant pooled model?
+
+[00:10:52] PRIYA SHARMA: Security is paramount here, especially for enterprise customers. I'd implement defense in depth:
+
+Layer 1 — Network: Each tenant's traffic is tagged at the ALB with a tenant ID header. WAF rules prevent cross-tenant request patterns.
+
+Layer 2 — Application: Every API call includes a tenant context extracted from the JWT. A middleware service validates that the requesting user belongs to the target tenant before any data access.
+
+Layer 3 — Data: PostgreSQL RLS policies automatically filter queries by tenant_id. Even if there's a bug in the application layer, the database won't return cross-tenant data. For sensitive fields, we'd apply column-level encryption using AWS KMS with per-tenant keys.
+
+Layer 4 — Audit: CloudTrail logs enriched with tenant context, shipped to a centralized Security Lake for cross-tenant anomaly detection.
+
+[00:12:40] SARAH CHEN: How would you handle the scaling challenge? 500 customers, peak times could be unpredictable.
+
+[00:12:48] PRIYA SHARMA: I'd approach scaling at multiple levels:
+
+Compute: ECS Fargate with target tracking auto-scaling based on both CPU utilization and custom metrics — specifically, WebSocket connection count per task. I'd set a target of 10,000 concurrent connections per task with a scale-out threshold at 8,000.
+
+Database: Aurora Serverless v2 for the pooled tenants — it scales automatically between 0.5 and 128 ACUs. For the silo tenants, provisioned Aurora with read replicas that auto-scale based on CPU.
+
+Caching: ElastiCache Redis cluster with read replicas. I'd implement a tiered caching strategy — L1 in-process cache (5-second TTL), L2 Redis (60-second TTL), L3 database.
+
+The key insight is pre-warming. For predictable spikes — like Monday morning when all enterprise users log in — I'd implement scheduled scaling actions that pre-provision capacity 15 minutes ahead based on historical patterns analyzed weekly by a simple ML model in SageMaker.
+
+[00:14:55] SARAH CHEN: Last question on the design — what's your cost optimization strategy for this platform?
+
+[00:15:02] PRIYA SHARMA: FinOps is something I'm passionate about. At GlobalTech, I implemented a practice that saved $2.3 million annually. For this platform, I'd focus on:
+
+1. Right-sizing through continuous monitoring — using Compute Optimizer for ECS tasks and trusted advisor for underutilized resources.
+
+2. Savings Plans — 3-year compute savings plan for the baseline (we know 500 customers aren't going away), covering about 60% of compute spend at a 40% discount.
+
+3. Tenant-aware cost allocation — using AWS Cost and Usage Reports with custom tags to attribute costs per tenant. This feeds into our pricing model and identifies unprofitable accounts.
+
+4. Spot instances for non-critical batch workloads — analytics pipelines, report generation, ML training. With a Spot-friendly architecture using SQS-backed workers, we can tolerate interruptions gracefully.
+
+5. Data lifecycle policies — S3 Intelligent Tiering for collaboration document storage, automatic archival to Glacier Deep Archive after 90 days of inactivity per tenant.
+
+I'd target a 30-35% reduction in per-tenant infrastructure cost within the first year.
+
+[00:17:20] SARAH CHEN: Excellent. Let's shift to behavioral. Tell me about a time when you had to push back on a technical decision from leadership.
+
+[00:17:32] PRIYA SHARMA: Sure. About 18 months ago, our CTO wanted to adopt a specific startup's proprietary container orchestration platform instead of EKS. The vendor had a compelling demo and the CTO was enthusiastic.
+
+I had concerns about vendor lock-in, the startup's financial stability — they'd only had one funding round — and the lack of community support compared to Kubernetes. But I knew that simply saying "no" wouldn't be productive.
+
+So I proposed a structured evaluation. I created a decision framework with weighted criteria: operational maturity, community ecosystem, migration path, cost at scale, and talent availability. I invited the CTO to help define the weights so he had ownership of the process.
+
+We ran a two-week proof of concept with both options using our actual workloads. The data showed that while the startup's platform was 20% faster to deploy initially, EKS had 3x more troubleshooting resources, 60% lower talent acquisition cost, and a clear migration path from our existing Docker Compose setup.
+
+The CTO appreciated the data-driven approach and agreed to go with EKS. He actually adopted the decision framework for future technology evaluations. The key was making it about the data, not about being right.
+
+[00:19:45] SARAH CHEN: Great example. One more — tell me about a time you mentored someone who was struggling.
+
+[00:19:55] PRIYA SHARMA: Yes, I had a junior engineer, Alex, who joined my team about two years ago. Smart person, great at coding, but really struggling with system design thinking. They'd write beautiful code for individual services but couldn't see how components connected or anticipate failure modes.
+
+Instead of just assigning design reviews, I started what I called "architecture lunch sessions." Every Thursday, Alex and I would take a real production incident from the previous week and reverse-engineer it. What was the system design flaw that allowed this failure? How would we prevent it? What signals should have alerted us earlier?
+
+After about three months, I started seeing a shift. Alex began asking "what happens when this fails?" during design discussions — unprompted. Within six months, they led their first architecture design review for a new microservice. It wasn't perfect, but the thinking was sound.
+
+Today, Alex is a mid-level engineer who mentors new hires on operational readiness. That progression from struggling with system thinking to teaching others is probably my proudest mentoring moment.
+
+[00:22:10] SARAH CHEN: That's wonderful. I appreciate you sharing that. Priya, we're nearing the end of our time. Do you have any questions for me?
+
+[00:22:20] PRIYA SHARMA: Yes! I'd love to understand more about the team I'd be joining. What's the current team composition, and what are the biggest technical challenges you're facing in the next 6-12 months?
+
+[00:22:35] SARAH CHEN: Great question. The Cloud Infrastructure team is currently 12 people — 4 senior, 6 mid-level, 2 junior. The biggest challenges are completing our migration from the legacy data center by Q4, implementing a multi-region active-active architecture for our core platform, and building out our FinOps practice. This role would lead the multi-region and FinOps initiatives.
+
+[00:23:15] PRIYA SHARMA: That's exciting — both are areas I'm passionate about. The multi-region challenge is particularly interesting given the real-time collaboration requirements. I'd love to discuss my approach to global data consistency in more detail in a follow-up conversation.
+
+[00:23:35] SARAH CHEN: Absolutely. Priya, thank you for your time today. Your depth of experience is evident, and I really appreciated how you structured your design thinking. You'll hear from our recruiting team within the next few days about next steps.
+
+[00:23:50] PRIYA SHARMA: Thank you, Sarah! I really enjoyed this conversation and I'm even more excited about the role after hearing about the team's challenges. Looking forward to next steps.
+
+[00:24:00] — END OF INTERVIEW —
+
+
