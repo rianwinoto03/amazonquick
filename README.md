@@ -59,5 +59,3 @@ Use these credentials for all workshop sign-in prompts.
 > Web sign-in uses Username. Desktop and action connector sign-in use Email. The password is the same for all.
 
 ---
-
-*If you'd like, I can also convert this file to README.md so GitHub renders the Markdown automatically, or further style the sections (tables, badges, or collapsible sections).*
