@@ -1,0 +1,13 @@
+Create Workshop Studio : https://catalog.workshops.aws/amazon-quick-suite-workshop/en-US
+
+Prequisites tasks before workshop (All done with Workshop User Admin) :
+- Create Participant Users inside Amazon Quick & Assign Licenses (Professional)
+- Create allUser group and assign participants to allUser group.
+- Create Workshop API using workshop-schema.json & userid password from admin user. Share with Everyone in this organization.
+- Create S3 Knowledge base connection and share to group allUser.
+- Create Quick Apps section, and share to group allUser.
+
+Demo flow:
+- follow through the workshop guide. 
+- Skip section workshop Quick Desktop or Demo by facilitators / speaker only. 
+- Add any connector, MCP, or knowledge base according to what customer have (dataset connection for dashboard, Google Drive, Outlook, MCP, etc)
